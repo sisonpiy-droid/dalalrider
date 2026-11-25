@@ -1,0 +1,12 @@
+{
+  "name": "DalalRider — Ride any NSE & BSE stock chart",
+  "short_name": "DalalRider",
+  "description": "Motocross meets Dalal Street. Ride real Indian stock charts on a dirt bike.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0A0C10",
+  "theme_color": "#FF9933",
+  "icons": [
+    { "src": "./logo.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
