@@ -263,7 +263,7 @@ export function drawBike(
   cameraY: number,
   canvasWidth: number,
   canvasHeight: number,
-  options?: { noHanderBlend?: number; supermanBlend?: number; founderFace?: HTMLImageElement; faceRadius?: number; opacity?: number; hideRider?: boolean; squash?: number }
+  options?: { noHanderBlend?: number; supermanBlend?: number; founderFace?: HTMLImageElement; faceRadius?: number; opacity?: number; hideRider?: boolean; squash?: number; bodyColor?: string }
 ) {
   ctx.save();
   if (options?.opacity !== undefined) ctx.globalAlpha = options.opacity;
@@ -365,7 +365,7 @@ export function drawBike(
   ctx.lineWidth = 0.8;
   ctx.stroke();
 
-  ctx.strokeStyle = '#E24B4A';
+  ctx.strokeStyle = options?.bodyColor || '#E24B4A';
   ctx.lineWidth = 2.5;
   ctx.beginPath();
   ctx.moveTo(-FRAME_WIDTH / 2 + 4, -2);
@@ -392,7 +392,7 @@ export function drawBike(
   ctx.lineTo(-FRAME_WIDTH / 2 + 6, -4);
   ctx.fill();
 
-  ctx.fillStyle = '#E24B4A';
+  ctx.fillStyle = options?.bodyColor || '#E24B4A';
   ctx.beginPath();
   ctx.moveTo(2, -FRAME_HEIGHT / 2 - 4);
   ctx.quadraticCurveTo(8, -FRAME_HEIGHT / 2 - 8, FRAME_WIDTH / 2 - 8, -8);
@@ -517,7 +517,7 @@ export function drawBike(
       ctx.drawImage(options.founderFace, headX - hR, headY - hR, hR * 2, hR * 2);
       ctx.restore();
     } else {
-      ctx.fillStyle = '#E24B4A';
+      ctx.fillStyle = options?.bodyColor || '#E24B4A';
       ctx.beginPath();
       ctx.arc(headX, headY, 5, 0, Math.PI * 2);
       ctx.fill();
@@ -582,6 +582,54 @@ export function drawGhostBike(
     composite: {},
   } as unknown as Bike;
   drawBike(ctx, mock, cameraX, cameraY, canvasWidth, canvasHeight, { opacity: 0.25 });
+}
+
+
+export function drawOpponentBike(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, angle: number,
+  nickname: string, color: string,
+  cameraX: number, cameraY: number, canvasWidth: number, canvasHeight: number,
+) {
+  ghostWheelAngle += (x - ghostLastX) / WHEEL_RADIUS;
+  ghostLastX = x;
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  const toWorld = (lx: number, ly: number) => ({
+    x: x + cos * lx - sin * ly,
+    y: y + sin * lx + cos * ly,
+  });
+  const rearPos = toWorld(-WHEELBASE / 2, SUSPENSION_LENGTH);
+  const frontPos = toWorld(WHEELBASE / 2, SUSPENSION_LENGTH);
+  const mock = {
+    frame: { position: { x, y }, angle },
+    rearWheel: { position: rearPos, angle: ghostWheelAngle },
+    frontWheel: { position: frontPos, angle: ghostWheelAngle },
+    guard: { position: { x, y }, angle },
+    constraints: [],
+    composite: {},
+  } as unknown as Bike;
+  drawBike(ctx, mock, cameraX, cameraY, canvasWidth, canvasHeight, { opacity: 0.9, bodyColor: color });
+
+  // Draw floating name tag above friend's bike
+  ctx.save();
+  ctx.translate(-cameraX + canvasWidth / 2, -cameraY + canvasHeight / 2);
+  ctx.font = 'bold 11px "JetBrains Mono", monospace';
+  const tw = ctx.measureText(nickname).width + 12;
+  const tx = x;
+  const ty = y - 54;
+  ctx.fillStyle = 'rgba(10, 12, 16, 0.85)';
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(tx - tw / 2, ty - 10, tw, 18, 4);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(nickname, tx, ty - 1);
+  ctx.restore();
 }
 
 export interface RagdollBodies {

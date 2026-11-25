@@ -2,7 +2,8 @@ import Matter from 'matter-js';
 import { DataPoint, GhostFrame, incrementStats } from '../data/TickerData';
 import { generateTerrainFromData, createTerrainBodies, drawTerrain, TerrainPoint, TrendZone, yToPrice } from '../terrain';
 import { navigate, navigateIpo, navigateTrustMrr } from '../ui/Router';
-import { createBike, accelerate, brake, leanForward, leanBack, jump, isRearGrounded, isFrontGrounded, getContactAngle, drawBike, drawGhostBike, drawRagdoll, resetBike, stabilizeBike, Bike } from '../bike';
+import { createBike, accelerate, brake, leanForward, leanBack, jump, isRearGrounded, isFrontGrounded, getContactAngle, drawBike, drawGhostBike, drawOpponentBike, drawRagdoll, resetBike, stabilizeBike, Bike } from '../bike';
+import { mp } from '../multiplayer';
 import { Camera } from '../camera';
 import { startEngine, updateEngine, stopEngine, playCrash, playLanding, playTrick, playFinish, playCombo, playNos, playMoonReached, playNamedCombo, playOpeningBell, preloadBell, isMuted, toggleMute, playStreakUp, playStreakLost, playPerfectLanding, playCoin } from '../sound';
 
@@ -44,6 +45,7 @@ export interface GameOptions {
   isTrustMrr?: boolean;
   founderPicUrl?: string;
   skipGate?: boolean;
+  multiplayer?: boolean;
 }
 
 interface FloatingText {
@@ -131,6 +133,8 @@ export function startGame(
       <div class="tt-dismiss">Hold GAS (right side) to start</div>
     </div>` : ''}
     <div id="tut-banner" style="display:none"></div>
+    <div id="mp-hud-board" style="display:none;position:fixed;top:62px;right:14px;background:rgba(12,12,18,0.86);border:1px solid #2a2a34;border-radius:8px;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;z-index:25;min-width:165px;pointer-events:none"></div>
+    <div id="mp-winner-toast" style="display:none;position:fixed;top:18%;left:50%;transform:translateX(-50%);background:rgba(12,12,18,0.94);border:2px solid #FF9933;border-radius:12px;padding:12px 24px;font-family:'JetBrains Mono',monospace;text-align:center;z-index:35;box-shadow:0 8px 32px rgba(0,0,0,0.6);pointer-events:none"></div>
   `;
 
   const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
@@ -953,7 +957,8 @@ export function startGame(
       debugBodies = Matter.Composite.allBodies(engine.world).length;
     }
 
-    const gateLock = tutorialActive;
+    const mpCountdownLeft = (options.multiplayer && mp.state?.startTime) ? Math.max(0, (mp.state.startTime - Date.now()) / 1000) : 0;
+    const gateLock = tutorialActive || mpCountdownLeft > 0;
     const wantsGas = !gateLock && (keys['ArrowUp'] || keys['KeyW'] || touch.gas);
     const zoneLeanBack = !gateLock && (keys['ArrowLeft'] || keys['KeyA'] || touch.leanBack);
     const zoneLeanForward = !gateLock && (keys['ArrowRight'] || keys['KeyD'] || touch.leanForward);
@@ -1453,6 +1458,7 @@ export function startGame(
       if (bike.frame.position.x >= endPoleX && !finished) {
         finished = true;
         score += 1000;
+        if (options.multiplayer) mp.reportMyFinish(gameTime, score);
         playFinish();
         buzz([30, 40, 90]);
         addShake(5);
@@ -1480,6 +1486,10 @@ export function startGame(
     }
     debugPhysicsMs = performance.now() - perfStart;
     frameCount++;
+    if (options.multiplayer && mp.state && frameCount % 3 === 0 && !finished) {
+      const prog = Math.min(1, Math.max(0, (bike.frame.position.x - SPAWN_X) / (endPoleX - SPAWN_X)));
+      mp.broadcastMyPosition(bike.frame.position.x, bike.frame.position.y, bike.frame.angle, prog, score, crashes);
+    }
 
     const renderStart = performance.now();
     const alpha = accumulator / PHYSICS_DT;
@@ -1547,6 +1557,12 @@ export function startGame(
         drawGhostBike(ctx, g.x, g.y, g.a, camera.x, camera.y, vw, vh);
       }
     }
+    if (options.multiplayer && mp.state) {
+      for (const p of Object.values(mp.state.players)) {
+        if (p.id === mp.myId) continue;
+        drawOpponentBike(ctx, p.x, p.y, p.angle, p.nickname, p.color, camera.x, camera.y, vw, vh);
+      }
+    }
     const nhBlend = noHanderTriggered ? Math.min(1, (noHanderTime - 2.0) / 0.2) : 0;
     const smBlend = (!grounded && !postCrashAirborne && supermanTriggered) ? (supermanTime > 1.5 ? Math.min(1, (supermanTime - 1.5) / 0.3) : supermanFade) : 0;
     if (landingSquash > 0.01) landingSquash *= Math.pow(0.0004, renderDt);
@@ -1588,7 +1604,50 @@ export function startGame(
       crashFlash = 0;
     }
 
-    drawMinimap(ctx, terrainPoints, bike.frame.position.x, bike.frame.position.y, vw, vh);
+    drawMinimap(ctx, terrainPoints, bike.frame.position.x, bike.frame.position.y, vw, vh, options.multiplayer);
+    if (options.multiplayer && mp.state) {
+      const mpBoard = document.getElementById('mp-hud-board');
+      if (mpBoard) {
+        mpBoard.style.display = 'block';
+        const sorted = Object.values(mp.state.players).sort((a, b) => {
+          if (a.finished && b.finished) return a.finishTime - b.finishTime;
+          if (a.finished) return -1;
+          if (b.finished) return 1;
+          return b.progress - a.progress;
+        });
+        mpBoard.innerHTML = `<div style="color:#FF9933;font-weight:800;margin-bottom:5px;letter-spacing:0.8px">🏁 ROOM ${mp.state.code}</div>` +
+          sorted.map((p, idx) => {
+            const status = p.finished ? `🏆 ${p.finishTime.toFixed(1)}s` : `${Math.round(p.progress * 100)}%`;
+            return `<div style="display:flex;justify-content:space-between;gap:10px;padding:2px 0;color:${p.id === mp.myId ? '#fff' : '#aaa'};font-weight:${p.id === mp.myId ? '700' : '400'}">
+              <span>${idx + 1}. <span style="color:${p.color}">●</span> ${p.nickname.slice(0, 11)}</span>
+              <span style="color:${p.finished ? '#5DCAA5' : '#888'}">${status}</span>
+            </div>`;
+          }).join('');
+      }
+      const winToast = document.getElementById('mp-winner-toast');
+      if (winToast && mp.state.winnerId) {
+        winToast.style.display = 'block';
+        const iWon = mp.state.winnerId === mp.myId;
+        winToast.style.borderColor = iWon ? '#5DCAA5' : '#FF9933';
+        winToast.innerHTML = `<div style="font-size:11px;color:${iWon ? '#5DCAA5' : '#FF9933'};font-weight:800;letter-spacing:1.5px">${iWon ? '👑 YOU WON THE RACE!' : '🏁 WINNER CROSSED THE LINE!'}</div>
+          <div style="font-size:18px;font-weight:800;color:#fff;margin-top:2px">${mp.state.winnerName} · ${(mp.state.winnerTime || 0).toFixed(1)}s</div>`;
+      }
+      if (mpCountdownLeft > 0) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(10, 12, 16, 0.55)';
+        ctx.fillRect(0, 0, vw, vh);
+        ctx.font = '900 72px "JetBrains Mono", monospace';
+        ctx.fillStyle = '#FF9933';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const num = Math.ceil(mpCountdownLeft);
+        ctx.fillText(num > 0 ? String(num) : 'GO!', vw / 2, vh / 2 - 20);
+        ctx.font = '700 15px "JetBrains Mono", monospace';
+        ctx.fillStyle = '#F4F4F6';
+        ctx.fillText('FIRST TO CROSS THE FINISH LINE WINS!', vw / 2, vh / 2 + 42);
+        ctx.restore();
+      }
+    }
 
     const moonScreenY = (MOON_Y - camera.y) + vh / 2;
     if (moonScreenY > -80 && moonScreenY < vh + 80) {
@@ -1784,7 +1843,8 @@ function drawMinimap(
   bikeX: number,
   bikeY: number,
   canvasWidth: number,
-  canvasHeight: number
+  canvasHeight: number,
+  isMultiplayer?: boolean
 ) {
   const isMobile = canvasWidth < 800;
   const MAP_W = isMobile ? Math.round(canvasWidth * 0.16) : 140;
@@ -1840,6 +1900,17 @@ function drawMinimap(
   ctx.fillStyle = 'rgba(26, 26, 32, 0.8)';
   ctx.fill();
 
+  if (isMultiplayer && mp.state) {
+    for (const p of Object.values(mp.state.players)) {
+      if (p.id === mp.myId) continue;
+      const ox = toMX(p.x);
+      const oy = toMY(p.y);
+      ctx.beginPath();
+      ctx.arc(ox, oy, 3, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.fill();
+    }
+  }
   const dotX = toMX(bikeX);
   const dotY = toMY(bikeY);
   ctx.beginPath();

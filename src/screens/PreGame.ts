@@ -310,6 +310,7 @@ export function renderPreGame(
             ? `<button class="cta disabled" id="play-btn" disabled>Not enough data</button>`
             : `<button class="cta" id="play-btn">${daily ? 'Ride today\'s challenge' : isChallenge ? 'Take the challenge' : ticker.trustmrr ? `Ride ${currentGranularity} unicorn chart` : 'Ride this chart'}</button>`
           }
+          ${!ticker.trustmrr ? `<a href="#/room?t=${ticker.symbol}&p=${currentPeriod}" style="display:inline-block;margin-top:12px;font-size:13px;font-family:var(--font-display);color:#FF9933;text-decoration:none;border:1px solid rgba(255,153,51,0.35);background:rgba(255,153,51,0.08);padding:9px 18px;border-radius:8px;font-weight:700">🏁 Host Multiplayer Room on ${ticker.symbol} →</a>` : ''}
           ${ticker.trustmrr ? `<div class="trustmrr-badge">Indian Tech Unicorn Track · NSE / BSE Market Data</div>` : ''}
         </div>
       </main>

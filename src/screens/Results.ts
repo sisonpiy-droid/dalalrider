@@ -1,4 +1,5 @@
 import { GameStats } from './Game';
+import { mp } from '../multiplayer';
 import { navigate } from '../ui/Router';
 import { CARD_VARIANTS, CardInput, topPercent, medalFor } from './ShareCardVariants';
 import { icon } from '../ui/icons';
@@ -47,6 +48,19 @@ export function renderResults(
   const overlay = document.createElement('div');
   overlay.className = 'results-overlay';
   document.body.style.overflow = 'hidden';
+
+  const isMpRoom = !!mp.state;
+  const mpWinnerName = mp.state?.winnerName;
+  const mpIWon = mp.state?.winnerId === mp.myId;
+  const mpStandingsHtml = isMpRoom && mp.state ? `
+    <div style="background:rgba(255,153,51,0.08);border:1px solid ${mpIWon ? '#5DCAA5' : '#FF9933'};border-radius:10px;padding:14px;margin-bottom:14px;text-align:left;font-family:var(--font-display)">
+      <div style="font-size:11px;font-weight:800;color:${mpIWon ? '#5DCAA5' : '#FF9933'};letter-spacing:1.2px;margin-bottom:4px">
+        ${mpIWon ? '👑 YOU FINISHED FIRST & WON THE ROOM!' : mpWinnerName ? `🏁 ${mpWinnerName.toUpperCase()} WON THE RACE (${(mp.state.winnerTime || 0).toFixed(1)}s)!` : '🏁 MULTIPLAYER RACE STANDINGS'}
+      </div>
+      <div id="mp-results-live-list" style="font-size:12px;margin-top:8px;display:flex;flex-direction:column;gap:5px"></div>
+      <button id="mp-back-lobby-btn" style="width:100%;margin-top:10px;background:#FF9933;color:#0A0C10;border:none;padding:9px 14px;border-radius:6px;font-weight:800;font-size:12px;cursor:pointer;font-family:var(--font-display)">← Back to Room Lobby (${mp.state.code})</button>
+    </div>
+  ` : '';
 
   const challengeWon = challengeScore != null && stats.score >= challengeScore;
   const challengeResult = challengeScore != null ? `
@@ -160,6 +174,7 @@ export function renderResults(
 
   overlay.innerHTML = `
     <div class="share-card${isDisaster ? ' disaster' : ''}">
+      ${mpStandingsHtml}
       ${challengeResult}
       <div class="results-overline" style="text-align:center;${isDisaster ? 'color:#E24B4A' : ''}">${isDisaster ? 'Total wipeout' : stats.finished ? 'Run complete' : 'Game over'}</div>
       <div class="rc-score${isDisaster ? ' disaster' : ''}"><span id="rc-score-num">0</span><span class="rc-pts">pts</span></div>
@@ -201,6 +216,36 @@ export function renderResults(
   `;
 
   container.appendChild(overlay);
+  if (isMpRoom && mp.state) {
+    const updateMpList = () => {
+      const listEl = overlay.querySelector('#mp-results-live-list');
+      if (!listEl || !mp.state) return;
+      const sorted = Object.values(mp.state.players).sort((a, b) => {
+        if (a.finished && b.finished) return a.finishTime - b.finishTime;
+        if (a.finished) return -1;
+        if (b.finished) return 1;
+        return b.progress - a.progress;
+      });
+      listEl.innerHTML = sorted.map((p, i) => {
+        const badge = i === 0 && p.finished ? '🥇 WINNER' : p.finished ? `#${i + 1} (${p.finishTime.toFixed(1)}s)` : `Racing (${Math.round(p.progress * 100)}%)`;
+        return `<div style="display:flex;justify-content:space-between;padding:4px 8px;background:rgba(0,0,0,0.35);border-radius:5px;color:${p.id === mp.myId ? '#fff' : '#bbb'};font-weight:${p.id === mp.myId ? '700' : '400'}">
+          <span>${i + 1}. <span style="color:${p.color}">●</span> ${p.nickname}</span>
+          <span style="color:${i === 0 && p.finished ? '#5DCAA5' : '#FF9933'}">${badge}</span>
+        </div>`;
+      }).join('');
+    };
+    const unsubMp = mp.subscribe(updateMpList);
+    overlay.querySelector('#mp-back-lobby-btn')?.addEventListener('click', () => {
+      unsubMp();
+      document.body.style.overflow = '';
+      overlay.remove();
+      if (mp.state) {
+        if (mp.state.hostId === mp.myId) mp.resetToLobby();
+        window.location.hash = `#/room/${mp.state.code}`;
+      }
+    });
+  }
+
 
   {
     const numEl = overlay.querySelector('#rc-score-num') as HTMLElement;

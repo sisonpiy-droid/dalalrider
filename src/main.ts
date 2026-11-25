@@ -24,6 +24,7 @@ import { renderContact } from './screens/Contact';
 import { renderAbout } from './screens/About';
 import { renderEarlyAccess } from './screens/EarlyAccess';
 import { renderLeaderboard as renderLeaderboardPage } from './screens/Leaderboard';
+import { renderRoom } from './screens/Room';
 
 const app = document.getElementById('app')!;
 let currentGame: { stop: () => void } | null = null;
@@ -74,6 +75,7 @@ interface LaunchOptions {
   dailyDate?: string;
   ipo?: boolean;
   skipGate?: boolean;
+  multiplayer?: boolean;
 }
 
 function launchGame(ticker: TickerInfo, period: string, opts: LaunchOptions = {}) {
@@ -127,7 +129,7 @@ function launchGame(ticker: TickerInfo, period: string, opts: LaunchOptions = {}
       renderResults(app, stats, ticker.symbol, period, diff, retryFn, points, opts.ipo ? undefined : opts.challengeScore, smooth, opts.daily ? { sessionId: opts.dailySessionId || '', date: opts.dailyDate || '' } : undefined, opts.ipo, !opts.ipo && !opts.daily, ticker.trustmrr, capturedGhost, ticker.name);
     },
   }, {
-    smooth, showMarketEvents: true, challengeScore: opts.challengeScore, ghostFrames: opts.ghostFrames, ipo: opts.ipo, skipGate: opts.skipGate,
+    smooth, showMarketEvents: true, challengeScore: opts.challengeScore, ghostFrames: opts.ghostFrames, ipo: opts.ipo, skipGate: opts.skipGate, multiplayer: opts.multiplayer,
     tombstone: ticker.defunct ? { label: ticker.name, years: `${ticker.meta.startDate.slice(0, 4)} – ${ticker.meta.endDate.slice(0, 4)}` } : undefined,
     hudIcon: ticker.trustmrr?.icon, hudName: ticker.trustmrr ? ticker.name : undefined, isTrustMrr: !!ticker.trustmrr, founderPicUrl: ticker.trustmrr?.xPicture,
   });
@@ -257,6 +259,14 @@ async function init() {
         setPageMeta('/about', 'About DalalRider — the stock chart riding game', 'DalalRider is a free browser game that turns real stock market charts into motocross tracks. Learn how it works, who made it, and where the data comes from.');
         renderAbout(app);
         break;
+      case 'room': {
+        setPageMeta('/room', 'Multiplayer Race Room — DalalRider', 'Create or join a live multiplayer room on DalalRider and race your friends across Indian stock charts.');
+        const allLocal = { ...(tickerData || {}), ...(hofData || {}), ...(crashedData || {}) };
+        renderRoom(app, allLocal, route.roomCode, route.ticker, route.period, (t, p, smooth) => {
+          launchGame(t, p, { smooth, multiplayer: true, skipGate: true });
+        });
+        break;
+      }
       case 'leaderboard':
         setPageMeta('/leaderboard', 'Daily challenge leaderboard — DalalRider', "DalalRider daily challenge leaderboard. Every day a new stock chart to ride — same track for everyone.");
         renderLeaderboardPage(app);

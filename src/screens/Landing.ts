@@ -274,6 +274,18 @@ export function renderLanding(container: HTMLElement, tickers: TickerInfo[], hal
         <div class="search-error" id="search-error" role="status"></div>
         <div class="trustmrr-powered" id="trustmrr-powered"${!startupMode ? ' style="display:none"' : ''}>Tracking India's top listed &amp; new-age consumer tech unicorns on NSE &amp; BSE</div>
       </section>
+            <div class="daily-banner" id="mp-landing-banner" style="margin-bottom:14px">
+        <div class="daily-card" style="border-color:rgba(255,153,51,0.35);background:linear-gradient(135deg,rgba(255,153,51,0.08),rgba(16,185,129,0.04))">
+          <div class="daily-left">
+            <div class="daily-badge" style="color:#FF9933">🏁 LIVE MULTIPLAYER ROOMS</div>
+            <div class="daily-ticker" style="font-size:18px">Race Friends in Real-Time</div>
+            <div class="daily-meta">Create a room or enter a friend's code · First to cross the finish line wins!</div>
+          </div>
+          <div class="daily-actions">
+            <a href="#/room" class="daily-cta" style="text-decoration:none;background:#FF9933;color:#0A0C10;font-weight:800">Create / Join Room →</a>
+          </div>
+        </div>
+      </div>
       <div class="daily-banner" id="daily-banner" style="display:none">
         <div class="daily-card">
           <div class="daily-left">

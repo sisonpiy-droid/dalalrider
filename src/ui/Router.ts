@@ -12,6 +12,7 @@ export interface Route {
   trustmrr?: boolean;
   startupMode?: boolean;
   granularity?: string;
+  roomCode?: string;
 }
 
 export function parseHash(): Route {
@@ -74,6 +75,11 @@ export function parseHash(): Route {
 
   if (['privacy', 'terms', 'legal', 'contact', 'leaderboard', 'early-access', 'about'].includes(path)) {
     return { screen: path };
+  }
+
+  if (path === 'room' || path.toLowerCase().startsWith('room/')) {
+    const code = path.length > 5 ? path.slice(5).toUpperCase() : (params.get('code') || undefined);
+    return { screen: 'room', roomCode: code, ticker: params.get('t') || undefined, period: params.get('p') || undefined };
   }
 
   if (path === 'cardlab') {
