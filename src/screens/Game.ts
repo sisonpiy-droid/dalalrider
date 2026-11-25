@@ -332,7 +332,7 @@ export function startGame(
     const viewR = camX + w;
     c.save();
     c.translate(-camX + w / 2, -camY + h / 2);
-    const color = isTrustMrr ? '#B3BFFF' : '#A9E8CD';
+    const color = isTrustMrr ? '#00E5FF' : '#FFB300';
     c.font = 'bold 11px "JetBrains Mono", monospace';
     c.textAlign = 'center';
     c.textBaseline = 'middle';
@@ -369,7 +369,7 @@ export function startGame(
     const offX = camX * PARALLAX - w / 2;
     const baseY = h / 2 + (650 - camY) * PARALLAX;
     if (baseY < 0) return;
-    c.fillStyle = '#15151C';
+    c.fillStyle = '#0F1830';
     for (let i = 0; i < skyline.length; i++) {
       const b = skyline[i];
       const sx = b.x - offX;
@@ -1510,9 +1510,9 @@ export function startGame(
     const renderDt = Math.min(0.05, frameDt / 1000);
     if (!bgGradient || bgGradientH !== vh) {
       bgGradient = ctx.createLinearGradient(0, 0, 0, vh);
-      bgGradient.addColorStop(0, '#0D1018');
-      bgGradient.addColorStop(0.55, '#111114');
-      bgGradient.addColorStop(1, '#111114');
+      bgGradient.addColorStop(0, '#050914');
+      bgGradient.addColorStop(0.55, '#091022');
+      bgGradient.addColorStop(1, '#0D152C');
       bgGradientH = vh;
     }
     ctx.fillStyle = bgGradient;
@@ -1535,7 +1535,7 @@ export function startGame(
     if (showPriceMarkers) drawPriceMarkers(ctx, priceMarkers, camera.x, camera.y, vw, vh);
     if (showMarketEvents) drawMarketEvents(ctx, marketEvents, camera.x, camera.y, vw, vh, isTrustMrr ? '#5066FB' : undefined);
     drawCoins(ctx, camera.x, camera.y, vw, vh);
-    drawPole(ctx, startPoleX, startPoleY, 'START', isTrustMrr ? '#5066FB' : '#5DCAA5', false, camera.x, camera.y, vw, vh);
+    drawPole(ctx, startPoleX, startPoleY, 'START', isTrustMrr ? '#5066FB' : '#00E676', false, camera.x, camera.y, vw, vh);
     drawPole(ctx, endPoleX, endPoleY, 'FINISH', '#EF9F27', true, camera.x, camera.y, vw, vh);
     if (options.tombstone) {
       const tsX = endPoleX + 200;
@@ -1620,7 +1620,7 @@ export function startGame(
             const status = p.finished ? `🏆 ${p.finishTime.toFixed(1)}s` : `${Math.round(p.progress * 100)}%`;
             return `<div style="display:flex;justify-content:space-between;gap:10px;padding:2px 0;color:${p.id === mp.myId ? '#fff' : '#aaa'};font-weight:${p.id === mp.myId ? '700' : '400'}">
               <span>${idx + 1}. <span style="color:${p.color}">●</span> ${p.nickname.slice(0, 11)}</span>
-              <span style="color:${p.finished ? '#5DCAA5' : '#888'}">${status}</span>
+              <span style="color:${p.finished ? '#00E676' : '#888'}">${status}</span>
             </div>`;
           }).join('');
       }
@@ -1628,8 +1628,8 @@ export function startGame(
       if (winToast && mp.state.winnerId) {
         winToast.style.display = 'block';
         const iWon = mp.state.winnerId === mp.myId;
-        winToast.style.borderColor = iWon ? '#5DCAA5' : '#FF9933';
-        winToast.innerHTML = `<div style="font-size:11px;color:${iWon ? '#5DCAA5' : '#FF9933'};font-weight:800;letter-spacing:1.5px">${iWon ? '👑 YOU WON THE RACE!' : '🏁 WINNER CROSSED THE LINE!'}</div>
+        winToast.style.borderColor = iWon ? '#00E676' : '#FF9933';
+        winToast.innerHTML = `<div style="font-size:11px;color:${iWon ? '#00E676' : '#FF9933'};font-weight:800;letter-spacing:1.5px">${iWon ? '👑 YOU WON THE RACE!' : '🏁 WINNER CROSSED THE LINE!'}</div>
           <div style="font-size:18px;font-weight:800;color:#fff;margin-top:2px">${mp.state.winnerName} · ${(mp.state.winnerTime || 0).toFixed(1)}s</div>`;
       }
       if (mpCountdownLeft > 0) {
@@ -1687,7 +1687,7 @@ export function startGame(
       if (hudAir) {
         const airStr = grounded ? 'grounded' : `${airTime.toFixed(1)}s`;
         if (hudAir.textContent !== airStr) hudAir.textContent = airStr;
-        const airColor = grounded ? '#5DCAA5' : '#EF9F27';
+        const airColor = grounded ? '#00E676' : '#EF9F27';
         if (hudAir.style.color !== airColor) hudAir.style.color = airColor;
       }
       const timerStr = formatTime(gameTime);
@@ -1770,7 +1770,7 @@ export function startGame(
       priceStr = `${fmtPrice} (${sign}${pctChange.toFixed(1)}%)`;
     }
     if (hudPrice.textContent !== priceStr) hudPrice.textContent = priceStr;
-    const priceColor = isTrustMrr ? '#5DCAA5' : (priceUp ? '#5DCAA5' : '#EF4444');
+    const priceColor = isTrustMrr ? '#00E676' : (priceUp ? '#00E676' : '#EF4444');
     if (hudPrice.style.color !== priceColor) hudPrice.style.color = priceColor;
 
     restoreBikeState(physBikeState);
@@ -1830,7 +1830,7 @@ function drawGrid(ctx: CanvasRenderingContext2D, camX: number, camY: number, w: 
   const endX = camX + w / 2;
   const startY = Math.floor((camY - h / 2) / gridSize) * gridSize;
   const endY = camY + h / 2;
-  ctx.strokeStyle = '#181820';
+  ctx.strokeStyle = 'rgba(255, 140, 26, 0.07)';
   ctx.lineWidth = 0.5;
   for (let x = startX; x < endX; x += gridSize) { ctx.beginPath(); ctx.moveTo(x, startY); ctx.lineTo(x, endY); ctx.stroke(); }
   for (let y = startY; y < endY; y += gridSize) { ctx.beginPath(); ctx.moveTo(startX, y); ctx.lineTo(endX, y); ctx.stroke(); }
@@ -2036,7 +2036,7 @@ function drawMarketEvents(
   for (const ev of events) {
     if (ev.x < viewLeft || ev.x > viewRight) continue;
 
-    const color = colorOverride || (ev.isCrash ? '#E24B4A' : '#5DCAA5');
+    const color = colorOverride || (ev.isCrash ? '#E24B4A' : '#00E676');
     const large = !!colorOverride;
     const fontSize = large ? 13 : 10;
     const padX = large ? 18 : 14;

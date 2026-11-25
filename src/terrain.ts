@@ -234,7 +234,7 @@ export function drawTerrain(
   ctx.lineTo(firstVisibleX, bottomY);
   ctx.closePath();
 
-  ctx.fillStyle = '#1a1a20';
+  ctx.fillStyle = '#0B1224';
   ctx.fill();
 
   interface ZonePath { isUp: boolean; pts: { x: number; y: number }[] }
@@ -278,13 +278,13 @@ export function drawTerrain(
     ctx.lineWidth = 12;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    ctx.strokeStyle = glowOverride || (isUp ? 'rgba(93,202,165,0.06)' : 'rgba(226,75,74,0.06)');
+    ctx.strokeStyle = glowOverride || (isUp ? 'rgba(0,230,118,0.10)' : 'rgba(255,46,84,0.10)');
     ctx.stroke(path);
 
     ctx.lineWidth = 2;
     ctx.lineCap = 'butt';
     ctx.lineJoin = 'miter';
-    ctx.strokeStyle = colorOverride || (isUp ? '#5DCAA5' : '#E24B4A');
+    ctx.strokeStyle = colorOverride || (isUp ? '#00E676' : '#FF2E54');
     ctx.stroke(path);
   }
 

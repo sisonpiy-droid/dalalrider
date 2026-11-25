@@ -23,10 +23,10 @@ function periodAvailable(allPoints: DataPoint[], period: string, ticker?: Ticker
 }
 
 const DIFFICULTY_COLORS: Record<string, { text: string; bg: string }> = {
-  easy: { text: '#5DCAA5', bg: '#0F3D2E' },
+  easy: { text: '#00E676', bg: '#0F3D2E' },
   medium: { text: '#EF9F27', bg: '#3D2E0A' },
   hard: { text: '#EF9F27', bg: '#3D2E0A' },
-  insane: { text: '#E24B4A', bg: '#3D1616' },
+  insane: { text: '#FF2E54', bg: '#3D1616' },
 };
 
 function chartSVG(points: DataPoint[], smooth = false, colorOverride?: string): string {
@@ -39,7 +39,7 @@ function chartSVG(points: DataPoint[], smooth = false, colorOverride?: string): 
   const pad = 10;
   const step = (w - pad * 2) / (points.length - 1);
 
-  const color = colorOverride || (points[points.length - 1].close >= points[0].close ? '#5DCAA5' : '#E24B4A');
+  const color = colorOverride || (points[points.length - 1].close >= points[0].close ? '#00E676' : '#FF2E54');
 
   const rawCoords = points.map((p, i) => ({
     x: pad + i * step,
@@ -200,7 +200,7 @@ export function renderPreGame(
     const allTimeRevLabel = ticker.trustmrr?.country ? `${ticker.trustmrr.country} · Listed Indian Tech Unicorn` : '';
     const colors = DIFFICULTY_COLORS[diff];
     const perfStr = perf >= 0 ? `+${perf}%` : `${perf}%`;
-    const perfColor = perf >= 0 ? '#5DCAA5' : '#E24B4A';
+    const perfColor = perf >= 0 ? '#00E676' : '#FF2E54';
 
     const pbId = isTrustMrr && ticker.trustmrr
       ? trackBestId(`TM:${ticker.trustmrr.slug}:${currentGranularity}`, currentPeriod, smoothTerrain)
@@ -292,7 +292,7 @@ export function renderPreGame(
         ${identity}
         <section class="chart-card" aria-label="Track preview">
           ${controls}
-          <div class="chart-fade">${chartSVG(filteredPoints, smoothTerrain, isTrustMrr ? '#5066FB' : undefined)}</div>
+          <div class="chart-fade">${chartSVG(filteredPoints, smoothTerrain, isTrustMrr ? '#00E5FF' : undefined)}</div>
           <div class="pg-stats">
             <div class="pg-stat"><b>${filteredPoints.length}</b><span>points</span></div>
             <div class="pg-stat"><b style="color:${colors.text}">${diff}</b><span>volatility</span></div>
@@ -455,7 +455,7 @@ export function renderPreGameIpo(
     const perfEl = container.querySelector('.perf');
     if (perfEl) {
       (perfEl as HTMLElement).textContent = perf >= 0 ? `+${perf}%` : `${perf}%`;
-      (perfEl as HTMLElement).style.color = perf >= 0 ? '#5DCAA5' : '#E24B4A';
+      (perfEl as HTMLElement).style.color = perf >= 0 ? '#00E676' : '#FF2E54';
     }
     const badge = container.querySelector('.badge');
     if (badge) {
@@ -513,7 +513,7 @@ export function renderPreGameIpo(
     const diff = calcDifficulty(points);
     const colors = DIFFICULTY_COLORS[diff];
     const perfStr = perf >= 0 ? `+${perf}%` : `${perf}%`;
-    const perfColor = perf >= 0 ? '#5DCAA5' : '#E24B4A';
+    const perfColor = perf >= 0 ? '#00E676' : '#FF2E54';
     const hasEnough = points.length >= MIN_DATA_POINTS;
 
     const pills = IPO_INTERVALS.filter(iv => {

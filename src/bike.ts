@@ -365,7 +365,7 @@ export function drawBike(
   ctx.lineWidth = 0.8;
   ctx.stroke();
 
-  ctx.strokeStyle = options?.bodyColor || '#E24B4A';
+  ctx.strokeStyle = options?.bodyColor || '#FF8C1A';
   ctx.lineWidth = 2.5;
   ctx.beginPath();
   ctx.moveTo(-FRAME_WIDTH / 2 + 4, -2);
@@ -376,7 +376,7 @@ export function drawBike(
   ctx.moveTo(0, -FRAME_HEIGHT / 2 - 2);
   ctx.lineTo(-2, 6);
   ctx.stroke();
-  ctx.strokeStyle = '#C43';
+  ctx.strokeStyle = '#CC6600';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.moveTo(-2, -FRAME_HEIGHT / 2);
@@ -392,7 +392,7 @@ export function drawBike(
   ctx.lineTo(-FRAME_WIDTH / 2 + 6, -4);
   ctx.fill();
 
-  ctx.fillStyle = options?.bodyColor || '#E24B4A';
+  ctx.fillStyle = options?.bodyColor || '#FF8C1A';
   ctx.beginPath();
   ctx.moveTo(2, -FRAME_HEIGHT / 2 - 4);
   ctx.quadraticCurveTo(8, -FRAME_HEIGHT / 2 - 8, FRAME_WIDTH / 2 - 8, -8);
@@ -517,7 +517,7 @@ export function drawBike(
       ctx.drawImage(options.founderFace, headX - hR, headY - hR, hR * 2, hR * 2);
       ctx.restore();
     } else {
-      ctx.fillStyle = options?.bodyColor || '#E24B4A';
+      ctx.fillStyle = options?.bodyColor || '#FF8C1A';
       ctx.beginPath();
       ctx.arc(headX, headY, 5, 0, Math.PI * 2);
       ctx.fill();

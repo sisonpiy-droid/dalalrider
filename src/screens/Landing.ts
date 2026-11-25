@@ -106,10 +106,10 @@ function tameLeadingPeaks(closes: number[]): number[] {
 }
 
 const DIFFICULTY_COLORS: Record<string, { text: string; bg: string }> = {
-  easy: { text: '#5DCAA5', bg: '#0F3D2E' },
+  easy: { text: '#00E676', bg: '#0F3D2E' },
   medium: { text: '#EF9F27', bg: '#3D2E0A' },
   hard: { text: '#EF9F27', bg: '#3D2E0A' },
-  insane: { text: '#E24B4A', bg: '#3D1616' },
+  insane: { text: '#FF2E54', bg: '#3D1616' },
 };
 
 function diffChip(difficulty: string, id?: string): string {
@@ -129,7 +129,6 @@ function renderTickerCard(t: TickerInfo, opts: { crashMode?: boolean } = {}): st
   let chartColor: string;
   let difficulty: TickerInfo['difficulty'];
   const latestClose = t.currentPrice ?? (t.dataPoints.length ? t.dataPoints[t.dataPoints.length - 1].close : 0);
-  const priceTag = latestClose > 0 ? ` · <span style="color:var(--text-primary);font-weight:600;font-family:'JetBrains Mono',monospace">${formatINR(latestClose)}</span>` : '';
 
   if (opts.crashMode && t.crashPeriod) {
     const crashData = t.dataPoints.filter(p => p.date >= t.crashPeriod!.start && p.date <= t.crashPeriod!.end);
@@ -139,7 +138,7 @@ function renderTickerCard(t: TickerInfo, opts: { crashMode?: boolean } = {}): st
       ? Math.round(((crashData[crashData.length - 1].close / crashData[0].close) - 1) * 1000) / 10
       : 0;
     perfStr = perf >= 0 ? `+${perf}%` : `${perf}%`;
-    chartColor = perf >= 0 ? '#5DCAA5' : '#E24B4A';
+    chartColor = perf >= 0 ? '#00E676' : '#FF2E54';
   } else {
     const hasIntraday = t.intradayPoints && t.intradayPoints.length >= 20;
     const yearData = filterByPeriod(t.dataPoints, '1y');
@@ -147,7 +146,7 @@ function renderTickerCard(t: TickerInfo, opts: { crashMode?: boolean } = {}): st
     difficulty = calcDifficulty(yearData);
     const perf = t.dayChangePct !== undefined ? t.dayChangePct : calcPerformance(yearData);
     perfStr = perf >= 0 ? `+${perf}%` : `${perf}%`;
-    chartColor = perf >= 0 ? '#5DCAA5' : '#E24B4A';
+    chartColor = perf >= 0 ? '#00E676' : '#FF2E54';
   }
 
   const perfCls = perfStr.startsWith('+') ? 'up' : 'down';
@@ -155,17 +154,22 @@ function renderTickerCard(t: TickerInfo, opts: { crashMode?: boolean } = {}): st
     ? ` · †${t.dataPoints[t.dataPoints.length - 1].date.slice(0, 4)}`
     : '';
   const href = opts.crashMode ? `#/${t.symbol}?p=crash` : `#/${t.symbol}`;
+  const exch = t.exchange || 'NSE';
 
   return `
     <a class="ticker-card" href="${href}" data-ticker="${t.symbol}"${opts.crashMode ? ' data-crash="1"' : ''}>
-      <div class="ticker-header">
-        <span class="ticker-name">${t.symbol}</span>
+      <div class="ticker-header" style="margin-bottom:4px">
+        <div>
+          <span class="ticker-name">${t.symbol}</span>
+          <span class="exch-pill">${exch}</span>
+        </div>
         ${diffChip(difficulty)}
       </div>
-      ${sparklineSVG(sparkPoints, chartColor)}
-      <div class="ticker-bot">
-        <span class="ticker-subtitle">${t.name}${deathYear}${priceTag}</span>
-        <span class="ticker-perf ${perfCls}">${perfStr}</span>
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.name}${deathYear}</div>
+      ${sparklineSVG(sparkPoints, chartColor, 58)}
+      <div class="ticker-bot" style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(148,163,184,0.12);display:flex;justify-content:space-between;align-items:center">
+        <span class="ticker-price-big">${latestClose > 0 ? formatINR(latestClose) : '—'}</span>
+        <span class="ticker-perf ${perfCls}">${perfStr.startsWith('+') ? '▲ ' : '▼ '}${perfStr}</span>
       </div>
     </a>
   `;
@@ -222,9 +226,9 @@ export function renderLanding(container: HTMLElement, tickers: TickerInfo[], hal
     if (isStartup) {
       const first = ALL_STARTUPS.map(s => prefetchedStartups?.[s.slug]).find(t => t);
       const pts = first ? (((first as any).weeklyDataPoints?.length >= 2 ? (first as any).weeklyDataPoints : first.dataPoints)) : undefined;
-      stripCleanup = mountTrackStrip(el, tameLeadingPeaks(stripCloses(pts)), '#5066FB');
+      stripCleanup = mountTrackStrip(el, tameLeadingPeaks(stripCloses(pts)), '#00E5FF');
     } else {
-      stripCleanup = mountTrackStrip(el, stripCloses(tickers[0] ? filterByPeriod(tickers[0].dataPoints, '1y') : undefined), '#5DCAA5');
+      stripCleanup = mountTrackStrip(el, stripCloses(tickers[0] ? filterByPeriod(tickers[0].dataPoints, '1y') : undefined), '#FF8C1A');
     }
   };
 
@@ -374,7 +378,7 @@ export function renderLanding(container: HTMLElement, tickers: TickerInfo[], hal
     const hasWeekly = (ticker as any).weeklyDataPoints?.length >= 2;
     const sparkPoints = hasWeekly ? (ticker as any).weeklyDataPoints : ticker.dataPoints;
     const sparkEl = document.getElementById(`sparkline-${s.slug}`);
-    if (sparkEl) sparkEl.innerHTML = sparklineSVG(downsample(sparkPoints, 250), '#5066FB');
+    if (sparkEl) sparkEl.innerHTML = sparklineSVG(downsample(sparkPoints, 250), '#00E5FF');
     const badge = document.getElementById(`badge-${s.slug}`);
     if (badge) {
       const diff = (ticker as any).difficulty || calcDifficulty(sparkPoints, hasWeekly);
@@ -503,7 +507,7 @@ export function renderLanding(container: HTMLElement, tickers: TickerInfo[], hal
       if (!resp || !resp.dataPoints.length) return;
       const sparkEl = document.getElementById('ipo-sparkline');
       const metaEl = document.getElementById('ipo-meta');
-      const color = resp.dataPoints.length >= 2 && resp.dataPoints[resp.dataPoints.length - 1].close >= resp.dataPoints[0].close ? '#5DCAA5' : '#E24B4A';
+      const color = resp.dataPoints.length >= 2 && resp.dataPoints[resp.dataPoints.length - 1].close >= resp.dataPoints[0].close ? '#00E676' : '#FF2E54';
       if (sparkEl) sparkEl.innerHTML = sparklineSVG(resp.dataPoints, color, 70);
       if (metaEl) {
         const perf = resp.dataPoints.length >= 2
